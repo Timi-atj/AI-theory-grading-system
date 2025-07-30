@@ -1,0 +1,98 @@
+<!-- static/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo Answer Marker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 2rem; }
+    .result { margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="mb-4">Answer Evaluation Demo</h2>
+
+    <form id="eval-form">
+      <div class="mb-3">
+        <label class="form-label">Question</label>
+        <textarea class="form-control" id="question" rows="2" required>In 12 words or fewer, explain the function of mitochondria.</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Real Answer (Admin)</label>
+        <textarea class="form-control" id="real_answer" rows="4" required>Mitochondria are the powerhouse of the cell, producing cellular energy.</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Student Answer</label>
+        <textarea class="form-control" id="student_answer" rows="4" required>Mitochondria create energy in cells.</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Important Keywords (comma-separated)</label>
+        <input class="form-control" id="keywords" value="mitochondria,energy,cells">
+      </div>
+
+       <div class="mb-3">
+        <label class="form-label">Word Limit</label>
+        <input class="form-control" id="word_limit" type="number" value="12">
+      </div>
+
+      <button type="submit" class="btn btn-primary">Evaluate</button>
+    </form>
+
+    <div class="result alert alert-info d-none" id="result-box">
+      <h4>Result</h4>
+      <p><strong>Score:</strong> <span id="score"></span>/10</p>
+      <p><strong>Grade:</strong> <span id="grade"></span></p>
+      <p><strong>Feedback:</strong> <span id="feedback"></span></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("eval-form");
+    const resultBox = document.getElementById("result-box");
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const question = document.getElementById("question").value;
+      const real = document.getElementById("real_answer").value;
+      const student = document.getElementById("student_answer").value;
+      const keywords = document.getElementById("keywords").value;
+      const word_limit = document.getElementById("word_limit").value;
+
+      try {
+        const res = await fetch("/evaluate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question,
+            real_answer: real,
+            student_answer: student,
+            keywords: keywords.split(',').map(k => k.trim()),
+            word_limit: word_limit ? parseInt(word_limit) : null
+          })
+        });
+
+        const data = await res.json();
+        if (data.error) {
+          alert("Error: " + data.error);
+          return;
+        }
+
+        resultBox.classList.remove("d-none");
+        document.getElementById("score").textContent = data.score;
+        document.getElementById("grade").textContent = data.grade;
+        document.getElementById("feedback").textContent = data.feedback;
+
+      } catch (err) {
+        alert("Something went wrong. Please check if your server is running.");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
