@@ -6,9 +6,16 @@ from pydantic import BaseModel
 from typing import List, Optional
 import httpx
 import json
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+api_key = os.getenv("OPENROUTER_API_KEY")
 
 app = FastAPI()
 
+# Allow CORS from all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,21 +23,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Serve static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Serve homepage
 @app.get("/", response_class=HTMLResponse)
 async def serve_home():
     with open("static/index.html", encoding="utf-8") as f:
         return f.read()
 
+# Input model for evaluation
 class EvaluationInput(BaseModel):
     question: str
     real_answer: str
     student_answer: str
     keywords: Optional[List[str]] = []
 
-OPENROUTER_API_KEY = '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'
-
+# Function to grade using Mistral via OpenRouter
 async def grade_with_mistral(question: str, model_answer: str, student_answer: str, keywords: List[str]):
     keyword_str = ', '.join(keywords) if keywords else 'None'
 
@@ -72,7 +81,7 @@ Keywords: {keyword_str}
 """
 
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Authorization": f"Bearer {api_key}",
         "HTTP-Referer": "http://localhost",
         "X-Title": "TheoryMarkerAI",
         "Content-Type": "application/json"
@@ -91,6 +100,7 @@ Keywords: {keyword_str}
         reply = response.json()["choices"][0]["message"]["content"]
         return json.loads(reply)
 
+# POST endpoint to evaluate answer
 @app.post("/evaluate")
 async def evaluate_answer(input: EvaluationInput):
     try:
