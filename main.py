@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
@@ -9,13 +8,11 @@ import json
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 api_key = os.getenv("OPENROUTER_API_KEY")
 
 app = FastAPI()
 
-# Allow CORS from all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,23 +20,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# ✅ Serve static frontend from root
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
-# Serve homepage
-@app.get("/", response_class=HTMLResponse)
-async def serve_home():
-    with open("static/index.html", encoding="utf-8") as f:
-        return f.read()
-
-# Input model for evaluation
 class EvaluationInput(BaseModel):
     question: str
     real_answer: str
     student_answer: str
     keywords: Optional[List[str]] = []
 
-# Function to grade using Mistral via OpenRouter
 async def grade_with_mistral(question: str, model_answer: str, student_answer: str, keywords: List[str]):
     keyword_str = ', '.join(keywords) if keywords else 'None'
 
@@ -100,7 +89,6 @@ Keywords: {keyword_str}
         reply = response.json()["choices"][0]["message"]["content"]
         return json.loads(reply)
 
-# POST endpoint to evaluate answer
 @app.post("/evaluate")
 async def evaluate_answer(input: EvaluationInput):
     try:
