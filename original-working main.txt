@@ -46,23 +46,35 @@ async def grade_with_mistral(question: str, model_answer: str, student_answer: s
     keyword_str = ', '.join(keywords) if keywords else 'None'
 
     prompt = f"""
-You are an intelligent grading assistant. Grade the student's answer based on its accuracy, completeness, and relevance compared to the correct answer.
+You are an exam grader. Grade the student’s answer based on:
 
-Follow these rules:
-- Understand different ways the student may express the correct idea, even if the wording differs.
-- Be fair, flexible, and constructive.
-- Highlight what was done well and what could be improved.
-- Provide a score out of 10, a letter grade, and a brief, helpful feedback (1–2 sentences).
-- If the student answer is completely incorrect or off-topic, clearly state so.
+1. The question asked
+2. The model answer (as a reference)
+3. The presence of these required keywords: {keyword_str}
 
-Output in this format:
+Your grading rules:
+- The student MUST mention all important keywords or concepts listed.
+- Do NOT rely solely on similarity to the model answer.
+- Penalize any missing or incomplete keyword/concept clearly.
+- You must extract which keywords were found vs missing.
 
-Score: X/10  
-Grade: (Letter Grade)  
-Feedback: (Brief explanation of the grade),
+Return:
+- score (0 to 10, deduct for missing keywords)
+- grade (A, B, C, D, F)
+- feedback (brief, max 2 lines)
+- found_keywords (list)
+- missing_keywords (list)
+
+Respond ONLY in this JSON format:
+{{
+  "score": 6,
+  "grade": "C",
+  "feedback": "The student missed important terms like 'life'.",
+  "found_keywords": ["study"],
+  "missing_keywords": ["life"]
+}}
 
 Now evaluate this:
-
 
 Question: {question}
 Model Answer: {model_answer}
