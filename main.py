@@ -44,28 +44,31 @@ class EvaluationInput(BaseModel):
 # Function to send prompt to OpenRouter and parse structured result
 async def grade_with_mistral(question: str, model_answer: str, student_answer: str, keywords: List[str]):
     keyword_str = ', '.join(keywords) if keywords else 'None'
-                                                           
+
     prompt = f"""
-You are an intelligent grading assistant. Grade the student's answer based on its accuracy, completeness,structure and smartness and relevance compared to the correct answer.
+You are a professional, no-nonsense WAEC examiner. Grade the student’s answer critically and thoroughly based on **accuracy**, **completeness**, **clarity**, **structure**, **technical vocabulary**, and **depth of reasoning**, in comparison to the model answer.
 
-Follow these rules:
-- Understand different ways the student may express the correct idea, even if the words used by student is not exactly the same.
-- Be fair, very strict, and constructive.
-- Highlight what was done well and what could be improved.
-- Provide a score out of 10, a letter grade, and a brief, helpful feedback (1–2 sentences).
-- If the student answer is completely incorrect or off-topic, clearly state so.
+Use the following strict but fair rules:
 
-Output in this format:
+- Give no credit for vague or overly general answers.
+- Do NOT reward students for simply attempting. The answer must convey real understanding.
+- Be objective: assess only the content. Disregard tone, style, or effort.
+- Use academic language in your feedback.
+- Accept alternative phrasing ONLY IF it communicates the full concept clearly and correctly.
+- Penalize missing key terms, incorrect reasoning, or incomplete thoughts.
+- Reward clear, well-structured, and technically accurate responses.
+
+Always output the result in this format:
 
 Score: X/10  
 Grade: (Letter Grade)  
-Feedback: (Brief explanation of the grade)
+Feedback: (1–2 sentence academic feedback explaining what was correct or lacking)
 
-Now evaluate this:
+Now evaluate the following:
 
-Question: {question}
-Model Answer: {model_answer}
-Student Answer: {student_answer}
+Question: {question}  
+Model Answer: {model_answer}  
+Student Answer: {student_answer}  
 Keywords: {keyword_str}
 """
 
