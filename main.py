@@ -44,7 +44,7 @@ class EvaluationInput(BaseModel):
 # Function to send prompt to OpenRouter and parse structured result
 async def grade_with_mistral(question: str, model_answer: str, student_answer: str, keywords: List[str]):
     keyword_str = ', '.join(keywords) if keywords else 'None'
-                                                           ========================pl
+                                                           
     prompt = f"""
 You are an intelligent grading assistant. Grade the student's answer based on its accuracy, completeness,structure and smartness and relevance compared to the correct answer.
 
