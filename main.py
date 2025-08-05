@@ -5,8 +5,8 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import httpx
-import json
 import os
+import re
 from dotenv import load_dotenv
 
 # Load API key from .env file
@@ -41,7 +41,7 @@ class EvaluationInput(BaseModel):
     keywords: Optional[List[str]] = []
 
 
-# Function to send prompt to OpenRouter
+# Function to send prompt to OpenRouter and parse structured result
 async def grade_with_mistral(question: str, model_answer: str, student_answer: str, keywords: List[str]):
     keyword_str = ', '.join(keywords) if keywords else 'None'
 
@@ -62,7 +62,6 @@ Grade: (Letter Grade)
 Feedback: (Brief explanation of the grade)
 
 Now evaluate this:
-
 
 Question: {question}
 Model Answer: {model_answer}
@@ -88,10 +87,21 @@ Keywords: {keyword_str}
         response = await client.post("https://openrouter.ai/api/v1/chat/completions", json=body, headers=headers)
         response.raise_for_status()
         reply = response.json()["choices"][0]["message"]["content"]
-        return json.loads(reply)
+
+        # Extract score, grade, feedback using regex
+        score_match = re.search(r"Score:\s*(\d+)/10", reply)
+        grade_match = re.search(r"Grade:\s*([A-F][+-]?)", reply)
+        feedback_match = re.search(r"Feedback:\s*(.*)", reply)
+
+        return {
+            "score": int(score_match.group(1)) if score_match else None,
+            "grade": grade_match.group(1) if grade_match else None,
+            "feedback": feedback_match.group(1).strip() if feedback_match else "No feedback found.",
+            "raw_response": reply  # optional for debugging
+        }
 
 
-# POST route for evaluation
+# POST route for grading
 @app.post("/evaluate")
 async def evaluate_answer(input: EvaluationInput):
     try:
@@ -105,8 +115,7 @@ async def evaluate_answer(input: EvaluationInput):
             "score": result["score"],
             "grade": result["grade"],
             "feedback": result["feedback"],
-            "found_keywords": result.get("found_keywords", []),
-            "missing_keywords": result.get("missing_keywords", [])
+            "raw_response": result["raw_response"]
         }
     except Exception as e:
         return {
