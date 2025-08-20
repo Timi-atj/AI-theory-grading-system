@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 
 # --- Config & App -----------------------------------------------------------
 # Why: keep runs reproducible and mildly flexible without multi-pass.
-DEFAULT_TEMPERATURE: float = 0.25
+DEFAULT_TEMPERATURE: float = 0.1
 DEFAULT_TOP_P: float = 0.9
 DEFAULT_MAX_TOKENS: int = 256
 DEFAULT_SEED: int = 42  # May be ignored by some models; harmless if unsupported.
